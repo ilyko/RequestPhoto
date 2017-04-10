@@ -57,7 +57,6 @@ public class ThirdActivity extends AppCompatActivity {
             //loadImageFromFile();
         }
 
-
         photoButton = (Button) this.findViewById(R.id.buttonCamera);
         photoButton.setOnClickListener(new View.OnClickListener() {
 
@@ -199,6 +198,34 @@ public class ThirdActivity extends AppCompatActivity {
         startActivityForResult(i, RESULT_LOAD_IMAGE);
     }
 
+    public void requestPermission(int requestCode) {
+        switch(requestCode){
+            case REQUEST_CAMERA:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkSelfPermission(android.Manifest.permission.CAMERA)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{android.Manifest.permission.CAMERA},
+                                REQUEST_CAMERA);
+
+                    }
+                } else {
+                    takePicture();
+                }
+                break;
+
+            case RESULT_LOAD_IMAGE:
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                            != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                RESULT_LOAD_IMAGE);
+                    }
+                } else {
+                    getPictureFromGallery();
+                }
+                break;
+        }
+    }
 
     public void requestPermissionCamera() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -213,16 +240,6 @@ public class ThirdActivity extends AppCompatActivity {
         }
     }
 
-
-    private void requestPermsCamera(){
-        String[] permissions = new String[]{Manifest.permission.CAMERA};
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-            requestPermissions(permissions, REQUEST_CAMERA);
-        }
-    }
-
-
-
     public void requestPermissionStorage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -234,14 +251,6 @@ public class ThirdActivity extends AppCompatActivity {
             getPictureFromGallery();
         }
     }
-
-    private void requestPermsStorage(){
-        String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
-            requestPermissions(permissions,RESULT_LOAD_IMAGE);
-        }
-    }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -256,7 +265,7 @@ public class ThirdActivity extends AppCompatActivity {
                         if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA))
                         {
                             Toast.makeText(this, "Camera Permissions denied.", Toast.LENGTH_SHORT).show();
-                        } else showNoCameraPermissionSnackbar();
+                        } else showNoPermissionSnackbar(REQUEST_CAMERA);
                     }
 
                 }
@@ -272,9 +281,47 @@ public class ThirdActivity extends AppCompatActivity {
                         {
                             Toast.makeText(this, "Storage Permissions denied.", Toast.LENGTH_SHORT).show();
                         } else
-                    showNoStoragePermissionSnackbar();
+                    showNoPermissionSnackbar(RESULT_LOAD_IMAGE);
                     }
                 }
+
+                break;
+        }
+
+    }
+
+    private void showNoPermissionSnackbar(int requestCode){
+        switch (requestCode){
+            case REQUEST_CAMERA:
+                Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), "Camera permission isn't granted" , Snackbar.LENGTH_LONG)
+                        .setAction("SETTINGS", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                openApplicationSettings();
+
+                                Toast.makeText(getApplicationContext(),
+                                        "Open Permissions and grant the Camera permission",
+                                        Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        })
+                        .show();
+
+                break;
+            case RESULT_LOAD_IMAGE:
+                Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), "Storage permission isn't granted" , Snackbar.LENGTH_LONG)
+                        .setAction("SETTINGS", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                openApplicationSettings();
+
+                                Toast.makeText(getApplicationContext(),
+                                        "Open Permissions and grant the Storage permission",
+                                        Toast.LENGTH_SHORT)
+                                        .show();
+                            }
+                        })
+                        .show();
 
                 break;
         }
@@ -358,13 +405,15 @@ public class ThirdActivity extends AppCompatActivity {
                             .setAction("GRANT", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
-                                    requestPermissionCamera();
+                                    //requestPermissionCamera();
+                                    requestPermission(REQUEST_CAMERA);
                                 }
                             })
                             .show();
                 } else
                 {
-                    requestPermissionCamera();
+                    //requestPermissionCamera();
+                    requestPermission(REQUEST_CAMERA);
                 }
                 break;
 
@@ -376,12 +425,14 @@ public class ThirdActivity extends AppCompatActivity {
                         .setAction("GRANT", new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
-                                requestPermissionStorage();
+                                //requestPermissionStorage();
+                                requestPermission(RESULT_LOAD_IMAGE);
                             }
                         })
                         .show();
             } else {
-                    requestPermissionStorage();
+                    //requestPermissionStorage();
+                    requestPermission(RESULT_LOAD_IMAGE);
                 }
                 break;
         }
