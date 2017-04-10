@@ -2,6 +2,7 @@ package com.slava.requestphoto;
 
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -33,24 +34,43 @@ import java.util.Date;
  * Created by Slava on 07.04.2017.
  */
 
-public class ThirdActivity extends AppCompatActivity {
+public class TakePhotoActivity extends AppCompatActivity {
 
     private static final int PERMISSION_REQUEST_CODE=123;
     private static final int REQUEST_CAMERA = 0;
     private static final int RESULT_LOAD_IMAGE = 1;
     private static final String PATH = "path";
+    private static final String TAG = "PAth";
 
     private ImageView mImageView;
     String mCurrentPhotoPath;
     Button photoButton;
     Button galleryButton;
 
+    public enum SOURCE {CAMERA, GALLERY}
+    private SOURCE source;
+
+    public static void getPhoto(Activity activity, int resultCode, SOURCE source){
+        Intent i = new Intent();
+        i.putExtra(SOURCE.class.getCanonicalName(), source.name());
+        i.putExtra("code", resultCode);
+        activity.startActivityForResult(i, resultCode);
+    }
 
     @Override
     protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        mImageView = (ImageView) this.findViewById(R.id.imageView);
+
+        Log.d(TAG, "Saved: " + savedInstanceState);
+
+        String choice = getIntent().getStringExtra(SOURCE.class.getCanonicalName());
+
+        if (choice.equals(SOURCE.CAMERA.name())) {
+            source = SOURCE.CAMERA;
+            //takePicture();
+        }
+        //setContentView(R.layout.activity_main);
+       /* mImageView = (ImageView) this.findViewById(R.id.imageView);
         if(savedInstanceState!=null){
             mCurrentPhotoPath = savedInstanceState.getString(PATH);
             Log.d(PATH,""+mCurrentPhotoPath);
@@ -80,7 +100,7 @@ public class ThirdActivity extends AppCompatActivity {
                     requestPermissionWithRationale(RESULT_LOAD_IMAGE);
                 }
             }
-        });
+        });*/
     }
 
 
@@ -88,6 +108,7 @@ public class ThirdActivity extends AppCompatActivity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putString(PATH,mCurrentPhotoPath);
+        outState.putString(SOURCE.class.getCanonicalName(), source.name());
     }
 
     private void takePicture() {
@@ -112,17 +133,23 @@ public class ThirdActivity extends AppCompatActivity {
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)        {
+        if (resultCode!=RESULT_OK) {
+            setResult(resultCode);
+            finish();
+            return;
+        }
 
         switch (requestCode){
             case REQUEST_CAMERA:
-        if (resultCode == RESULT_OK) {
-
-            loadImageFromFile();
-            galleryAddPic();
-        } break;
+                Intent intent= new Intent();
+                intent.putExtra(SOURCE.CAMERA.name(), mCurrentPhotoPath);
+                setResult(RESULT_OK, intent);
+                finish();
+           /* loadImageFromFile();
+            galleryAddPic();*/
+         break;
 
             case RESULT_LOAD_IMAGE:
-        if (resultCode == RESULT_OK) {
             Uri selectedImage = data.getData();
             String[] filePathColumn = {MediaStore.Images.Media.DATA};
             Cursor cursor = getContentResolver().query(selectedImage, filePathColumn, null, null, null);
@@ -134,9 +161,10 @@ public class ThirdActivity extends AppCompatActivity {
                 cursor.close();
                 loadImageFromFile();
             }
-        } break;
+         break;
         }
     }
+
     public void loadImageFromFile(){
 
         int targetW = mImageView.getWidth();
@@ -261,7 +289,7 @@ public class ThirdActivity extends AppCompatActivity {
     private void showNoPermissionSnackbar(int requestCode){
         switch (requestCode){
             case REQUEST_CAMERA:
-                Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), "Camera permission isn't granted" , Snackbar.LENGTH_LONG)
+                Snackbar.make(TakePhotoActivity.this.findViewById(R.id.activity_view), "Camera permission isn't granted" , Snackbar.LENGTH_LONG)
                         .setAction("SETTINGS", new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -277,7 +305,7 @@ public class ThirdActivity extends AppCompatActivity {
 
                 break;
             case RESULT_LOAD_IMAGE:
-                Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), "Storage permission isn't granted" , Snackbar.LENGTH_LONG)
+                Snackbar.make(TakePhotoActivity.this.findViewById(R.id.activity_view), "Storage permission isn't granted" , Snackbar.LENGTH_LONG)
                         .setAction("SETTINGS", new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
@@ -335,7 +363,7 @@ public class ThirdActivity extends AppCompatActivity {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                         Manifest.permission.CAMERA)) {
                     final String messageCamera = "Camera permission is needed to take pictures";
-                    Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), messageCamera, Snackbar.LENGTH_LONG)
+                    Snackbar.make(TakePhotoActivity.this.findViewById(R.id.activity_view), messageCamera, Snackbar.LENGTH_LONG)
                             .setAction("GRANT", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
@@ -354,7 +382,7 @@ public class ThirdActivity extends AppCompatActivity {
                 if(ActivityCompat.shouldShowRequestPermissionRationale(this,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 final String messageStorage = "Storage permission is needed to take pictures";
-                Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), messageStorage, Snackbar.LENGTH_LONG)
+                Snackbar.make(TakePhotoActivity.this.findViewById(R.id.activity_view), messageStorage, Snackbar.LENGTH_LONG)
                         .setAction("GRANT", new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
