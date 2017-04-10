@@ -12,28 +12,34 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
+
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-
 /**
  * Created by Slava on 07.04.2017.
  */
 
 public class ThirdActivity extends AppCompatActivity {
 
-    private static final int REQUEST_IMAGE_CAPTURE = 0;
+    private static final int PERMISSION_REQUEST_CODE=123;
+    private static final int REQUEST_CAMERA = 0;
     private static final int RESULT_LOAD_IMAGE = 1;
     private static final String PATH = "path";
-    String fileName;
+
     private ImageView mImageView;
     String mCurrentPhotoPath;
     Button photoButton;
@@ -57,8 +63,13 @@ public class ThirdActivity extends AppCompatActivity {
 
             @Override
             public void onClick(View v) {
-                //takePicture();
-                requestPermissionCamera();
+
+                if(hasPermissionsCamera()){
+                    takePicture();
+                } else {
+                    //requestPermissionCamera();
+                    requestPermissionWithRationale(REQUEST_CAMERA);
+                }
                 //savedInstanceState.putString(PATH,mCurrentPhotoPath);
             }
         });
@@ -67,8 +78,12 @@ public class ThirdActivity extends AppCompatActivity {
         galleryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //getPictureFromGallery();
-                requestPermissionStorage();
+                if(hasPermissionsStorage()){
+                    getPictureFromGallery();
+                } else {
+                    requestPermissionWithRationale(RESULT_LOAD_IMAGE);
+                    //requestPermissionStorage();
+                }
                 //savedInstanceState.putString(PATH,mCurrentPhotoPath);
             }
         });
@@ -97,7 +112,7 @@ public class ThirdActivity extends AppCompatActivity {
             if (photoFile != null) {
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT,
                         Uri.fromFile(photoFile));
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                startActivityForResult(takePictureIntent, REQUEST_CAMERA);
             }
         }
     }
@@ -105,7 +120,7 @@ public class ThirdActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data)        {
 
         switch (requestCode){
-            case REQUEST_IMAGE_CAPTURE:
+            case REQUEST_CAMERA:
         if (resultCode == RESULT_OK) {
 
             loadImageFromFile();
@@ -129,10 +144,6 @@ public class ThirdActivity extends AppCompatActivity {
         }
     }
     public void loadImageFromFile(){
-
-        //ImageView view = (ImageView)this.findViewById(R.id.imageView);
-        //view.setVisibility(View.VISIBLE);
-
 
         int targetW = mImageView.getWidth();
         int targetH = mImageView.getHeight();
@@ -188,18 +199,29 @@ public class ThirdActivity extends AppCompatActivity {
         startActivityForResult(i, RESULT_LOAD_IMAGE);
     }
 
+
     public void requestPermissionCamera() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (checkSelfPermission(android.Manifest.permission.CAMERA)
                     != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{android.Manifest.permission.CAMERA},
-                        REQUEST_IMAGE_CAPTURE);
+                        REQUEST_CAMERA);
 
             }
         } else {
             takePicture();
         }
     }
+
+
+    private void requestPermsCamera(){
+        String[] permissions = new String[]{Manifest.permission.CAMERA};
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            requestPermissions(permissions, REQUEST_CAMERA);
+        }
+    }
+
+
 
     public void requestPermissionStorage() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -213,41 +235,155 @@ public class ThirdActivity extends AppCompatActivity {
         }
     }
 
+    private void requestPermsStorage(){
+        String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            requestPermissions(permissions,RESULT_LOAD_IMAGE);
+        }
+    }
+
+
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case REQUEST_IMAGE_CAPTURE: {
-                // If request is cancelled, the result arrays are empty.
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+
+        switch (requestCode){
+            case REQUEST_CAMERA:
                 if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED){
                     takePicture();
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
                 } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return;
-            }
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA))
+                        {
+                            Toast.makeText(this, "Camera Permissions denied.", Toast.LENGTH_SHORT).show();
+                        } else showNoCameraPermissionSnackbar();
+                    }
 
-            case RESULT_LOAD_IMAGE: {
-                // If request is cancelled, the result arrays are empty.
+                }
+                break;
+
+            case RESULT_LOAD_IMAGE:
                 if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getPictureFromGallery();
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    loadImageFromFile();
                 } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (shouldShowRequestPermissionRationale(Manifest.permission.WRITE_EXTERNAL_STORAGE))
+                        {
+                            Toast.makeText(this, "Storage Permissions denied.", Toast.LENGTH_SHORT).show();
+                        } else
+                    showNoStoragePermissionSnackbar();
+                    }
                 }
-                return;
+
+                break;
+        }
+
+    }
+
+    private void showNoStoragePermissionSnackbar() {
+        Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), "Storage permission isn't granted" , Snackbar.LENGTH_LONG)
+                .setAction("SETTINGS", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openApplicationSettings();
+
+                        Toast.makeText(getApplicationContext(),
+                                "Open Permissions and grant the Storage permission",
+                                Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                })
+                .show();
+    }
+
+    private void showNoCameraPermissionSnackbar() {
+        Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), "Camera permission isn't granted" , Snackbar.LENGTH_LONG)
+                .setAction("SETTINGS", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openApplicationSettings();
+
+                        Toast.makeText(getApplicationContext(),
+                                "Open Permissions and grant the Camera permission",
+                                Toast.LENGTH_SHORT)
+                                .show();
+                    }
+                })
+                .show();
+    }
+
+    public void openApplicationSettings() {
+        Intent appSettingsIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + getPackageName()));
+        startActivityForResult(appSettingsIntent, PERMISSION_REQUEST_CODE);
+    }
+
+    private boolean hasPermissionsCamera(){
+        int res = 0;
+        //string array of permissions,
+        String[] permissions = new String[]{Manifest.permission.CAMERA};
+
+        for (String perms : permissions){
+            res = checkCallingOrSelfPermission(perms);
+            if (!(res == PackageManager.PERMISSION_GRANTED)){
+                return false;
             }
-            // other 'case' lines to check for other
-            // permissions this app might request
+        }
+        return true;
+    }
+
+    private boolean hasPermissionsStorage(){
+        int res = 0;
+        //string array of permissions,
+        String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+        for (String perms : permissions){
+            res = checkCallingOrSelfPermission(perms);
+            if (!(res == PackageManager.PERMISSION_GRANTED)){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void requestPermissionWithRationale(Integer requestCode) {
+
+        switch(requestCode){
+            case REQUEST_CAMERA:
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.CAMERA)) {
+                    final String messageCamera = "Camera permission is needed to take pictures";
+                    Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), messageCamera, Snackbar.LENGTH_LONG)
+                            .setAction("GRANT", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    requestPermissionCamera();
+                                }
+                            })
+                            .show();
+                } else
+                {
+                    requestPermissionCamera();
+                }
+                break;
+
+            case RESULT_LOAD_IMAGE:
+                if(ActivityCompat.shouldShowRequestPermissionRationale(this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                final String messageStorage = "Storage permission is needed to take pictures";
+                Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), messageStorage, Snackbar.LENGTH_LONG)
+                        .setAction("GRANT", new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                requestPermissionStorage();
+                            }
+                        })
+                        .show();
+            } else {
+                    requestPermissionStorage();
+                }
+                break;
         }
     }
 }
