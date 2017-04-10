@@ -51,7 +51,7 @@ public class TakePhotoActivity extends AppCompatActivity {
     private SOURCE source;
 
     public static void getPhoto(Activity activity, int resultCode, SOURCE source){
-        Intent i = new Intent();
+        Intent i = new Intent(activity, TakePhotoActivity.class);
         i.putExtra(SOURCE.class.getCanonicalName(), source.name());
         i.putExtra("code", resultCode);
         activity.startActivityForResult(i, resultCode);
@@ -63,11 +63,18 @@ public class TakePhotoActivity extends AppCompatActivity {
 
         Log.d(TAG, "Saved: " + savedInstanceState);
 
-        String choice = getIntent().getStringExtra(SOURCE.class.getCanonicalName());
+        if (savedInstanceState==null) {
 
-        if (choice.equals(SOURCE.CAMERA.name())) {
-            source = SOURCE.CAMERA;
-            //takePicture();
+            String choice = getIntent().getStringExtra(SOURCE.class.getCanonicalName());
+
+            if (choice.equals(SOURCE.CAMERA.name())) {
+                source = SOURCE.CAMERA;
+                takePicture();
+            }
+            if (choice.equals(SOURCE.GALLERY.name())){
+                source =SOURCE.GALLERY;
+                getPictureFromGallery();
+            }
         }
         //setContentView(R.layout.activity_main);
        /* mImageView = (ImageView) this.findViewById(R.id.imageView);
