@@ -54,7 +54,6 @@ public class ThirdActivity extends AppCompatActivity {
         if(savedInstanceState!=null){
             mCurrentPhotoPath = savedInstanceState.getString(PATH);
             Log.d(PATH,""+mCurrentPhotoPath);
-            //loadImageFromFile();
         }
 
         photoButton = (Button) this.findViewById(R.id.buttonCamera);
@@ -66,10 +65,8 @@ public class ThirdActivity extends AppCompatActivity {
                 if(hasPermissionsCamera()){
                     takePicture();
                 } else {
-                    //requestPermissionCamera();
                     requestPermissionWithRationale(REQUEST_CAMERA);
                 }
-                //savedInstanceState.putString(PATH,mCurrentPhotoPath);
             }
         });
 
@@ -81,9 +78,7 @@ public class ThirdActivity extends AppCompatActivity {
                     getPictureFromGallery();
                 } else {
                     requestPermissionWithRationale(RESULT_LOAD_IMAGE);
-                    //requestPermissionStorage();
                 }
-                //savedInstanceState.putString(PATH,mCurrentPhotoPath);
             }
         });
     }
@@ -180,8 +175,6 @@ public class ThirdActivity extends AppCompatActivity {
                 ".jpg",         /* suffix */
                 storageDir      /* directory */
         );
-
-        // Save a file: path for use with ACTION_VIEW intents
         mCurrentPhotoPath =  image.getAbsolutePath();
         return image;
     }
@@ -224,31 +217,6 @@ public class ThirdActivity extends AppCompatActivity {
                     getPictureFromGallery();
                 }
                 break;
-        }
-    }
-
-    public void requestPermissionCamera() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(android.Manifest.permission.CAMERA)
-                    != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{android.Manifest.permission.CAMERA},
-                        REQUEST_CAMERA);
-
-            }
-        } else {
-            takePicture();
-        }
-    }
-
-    public void requestPermissionStorage() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        RESULT_LOAD_IMAGE);
-            }
-        } else {
-            getPictureFromGallery();
         }
     }
 
@@ -328,38 +296,6 @@ public class ThirdActivity extends AppCompatActivity {
 
     }
 
-    private void showNoStoragePermissionSnackbar() {
-        Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), "Storage permission isn't granted" , Snackbar.LENGTH_LONG)
-                .setAction("SETTINGS", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        openApplicationSettings();
-
-                        Toast.makeText(getApplicationContext(),
-                                "Open Permissions and grant the Storage permission",
-                                Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                })
-                .show();
-    }
-
-    private void showNoCameraPermissionSnackbar() {
-        Snackbar.make(ThirdActivity.this.findViewById(R.id.activity_view), "Camera permission isn't granted" , Snackbar.LENGTH_LONG)
-                .setAction("SETTINGS", new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        openApplicationSettings();
-
-                        Toast.makeText(getApplicationContext(),
-                                "Open Permissions and grant the Camera permission",
-                                Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                })
-                .show();
-    }
-
     public void openApplicationSettings() {
         Intent appSettingsIntent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 Uri.parse("package:" + getPackageName()));
@@ -368,7 +304,6 @@ public class ThirdActivity extends AppCompatActivity {
 
     private boolean hasPermissionsCamera(){
         int res = 0;
-        //string array of permissions,
         String[] permissions = new String[]{Manifest.permission.CAMERA};
 
         for (String perms : permissions){
@@ -382,7 +317,6 @@ public class ThirdActivity extends AppCompatActivity {
 
     private boolean hasPermissionsStorage(){
         int res = 0;
-        //string array of permissions,
         String[] permissions = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
         for (String perms : permissions){
@@ -405,7 +339,6 @@ public class ThirdActivity extends AppCompatActivity {
                             .setAction("GRANT", new View.OnClickListener() {
                                 @Override
                                 public void onClick(View v) {
-                                    //requestPermissionCamera();
                                     requestPermission(REQUEST_CAMERA);
                                 }
                             })
@@ -431,7 +364,6 @@ public class ThirdActivity extends AppCompatActivity {
                         })
                         .show();
             } else {
-                    //requestPermissionStorage();
                     requestPermission(RESULT_LOAD_IMAGE);
                 }
                 break;
